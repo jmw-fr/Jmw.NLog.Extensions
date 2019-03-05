@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package>
+  <metadata>
+    <id>Jmw.NLog.Extensions</id>
+    <version>0.1.0</version>
+    <description>
+      Some helpers extensions for NLog.
+    </description>
+    <projectUrl>https://github.com/jmw-fr/Jmw.NLog.Extensions</projectUrl>
+    <authors>Jean-Marc Weeger</authors>
+    <license type="expression">MIT</license>
+    <dependencies>
+      <dependency id="NLog" version="4.5.11" />
+    </dependencies>
+  </metadata>
+</package>
