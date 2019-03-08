@@ -1,4 +1,4 @@
-﻿// <copyright file="NlogHttpClientHandler.cs" company="Jm Weeger">
+﻿// <copyright file="NLogHttpClientHandler.cs" company="Jm Weeger">
 // Copyright Jm Weeger under MIT Licence. See https://opensource.org/licenses/mit-license.php.
 // </copyright>
 
@@ -9,6 +9,7 @@ namespace Jmw.Extensions.Http
     using System.Threading;
     using System.Threading.Tasks;
     using NLog;
+    using NLog.Fluent;
 
     /// <summary>
     /// <see cref="HttpClientHandler"/> logging requests.
@@ -21,16 +22,24 @@ namespace Jmw.Extensions.Http
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             DateTime dtStart = DateTime.Now;
+            string requestBody = null;
+            string requestAnswer = null;
 
             HttpResponseMessage response = await base.SendAsync(request, cancellationToken);
 
-            Logger.Info($"{request.RequestUri} - {request.Method} - {response.StatusCode} - {(DateTime.Now - dtStart).Milliseconds} ms");
+            requestBody = await request.Content.ReadAsStringAsync();
+            requestAnswer = await response.Content.ReadAsStringAsync();
 
-            if (Logger.IsTraceEnabled)
-            {
-                Logger.Trace(await request.Content.ReadAsStringAsync());
-                Logger.Trace(await response.Content.ReadAsStringAsync());
-            }
+            Logger.Info()
+                .Message(
+                    "[requestUri} - {requestMethod} - {statusCode} - {processingTime}",
+                    request.RequestUri,
+                    request.Method,
+                    response.StatusCode,
+                    (DateTime.Now - dtStart).Milliseconds)
+                .Property("requestBody", request.RequestUri)
+                .Property("answerBody", request.RequestUri)
+                .Write();
 
             return response;
         }
