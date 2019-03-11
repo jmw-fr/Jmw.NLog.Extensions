@@ -18,28 +18,48 @@ namespace Jmw.Extensions.Http
     {
         private static readonly ILogger Logger = LogManager.GetCurrentClassLogger();
 
-        /// <inheritdoc/>
-        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        /// <summary>
+        /// Log the http request using NLog.
+        /// </summary>
+        /// <param name="dtStart">When the request has been received.</param>
+        /// <param name="request">The Http request message.</param>
+        /// <param name="response">The http answer.</param>
+        /// <returns>Async task.</returns>
+        internal async Task LogRequestAsync(DateTimeOffset dtStart, HttpRequestMessage request, HttpResponseMessage response)
         {
-            DateTime dtStart = DateTime.Now;
             string requestBody = null;
             string requestAnswer = null;
 
-            HttpResponseMessage response = await base.SendAsync(request, cancellationToken);
+            if (request != null && request.Content != null)
+            {
+                requestBody = await request.Content.ReadAsStringAsync();
+            }
 
-            requestBody = await request.Content.ReadAsStringAsync();
-            requestAnswer = await response.Content.ReadAsStringAsync();
+            if (response != null && response.Content != null)
+            {
+                requestAnswer = await response.Content.ReadAsStringAsync();
+            }
 
             Logger.Info()
+                .Property("requestBody", requestBody)
+                .Property("answerBody", requestAnswer)
                 .Message(
-                    "[requestUri} - {requestMethod} - {statusCode} - {processingTime}",
+                    "{requestUri} - {requestMethod} - {statusCode} - {processingTime} ms",
                     request.RequestUri,
                     request.Method,
                     response.StatusCode,
                     (DateTime.Now - dtStart).Milliseconds)
-                .Property("requestBody", request.RequestUri)
-                .Property("answerBody", request.RequestUri)
                 .Write();
+        }
+
+        /// <inheritdoc/>
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            DateTimeOffset dtStart = DateTimeOffset.Now;
+
+            HttpResponseMessage response = await base.SendAsync(request, cancellationToken);
+
+            await LogRequestAsync(dtStart, request, response);
 
             return response;
         }
